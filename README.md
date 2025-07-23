@@ -73,7 +73,7 @@ set OPENAI_API_KEY=sk-...
 ```
 
 Run the application from the same terminal session so the key is available.
-Alternatively, you can configure the key directly from the GUI. In the output settings section press "Configurar GPT API Key..." and enter your secret key.
+
 
 When generating a monthly bitácora report through the GUI you can now choose
 how many complete months to compare (between 2 and the number of detected
