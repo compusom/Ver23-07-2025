@@ -57,6 +57,24 @@ Some features use the OpenAI API to generate insights. Set the `OPENAI_API_KEY`
 environment variable with a valid API key before running the report scripts if
 you want to enable this functionality.
 
+### Setting your GPT API key
+
+Create an environment variable named `OPENAI_API_KEY` containing your OpenAI
+key. Example for Unix shells:
+
+```bash
+export OPENAI_API_KEY="sk-..."
+```
+
+On Windows command prompt use:
+
+```cmd
+set OPENAI_API_KEY=sk-...
+```
+
+Run the application from the same terminal session so the key is available.
+Alternatively, you can configure the key directly from the GUI. In the output settings section press "Configurar GPT API Key..." and enter your secret key.
+
 When generating a monthly bitácora report through the GUI you can now choose
 how many complete months to compare (between 2 and the number of detected
 months). Use the spinbox in the Bitácora configuration section to select the
