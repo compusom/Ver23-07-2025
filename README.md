@@ -51,6 +51,12 @@ After installing dependencies you can run the unit tests with:
 pytest
 ```
 
+## Environment Variables
+
+Some features use the OpenAI API to generate insights. Set the `OPENAI_API_KEY`
+environment variable with a valid API key before running the report scripts if
+you want to enable this functionality.
+
 When generating a monthly bitácora report through the GUI you can now choose
 how many complete months to compare (between 2 and the number of detected
 months). Use the spinbox in the Bitácora configuration section to select the
