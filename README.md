@@ -74,6 +74,7 @@ set OPENAI_API_KEY=sk-...
 
 Run the application from the same terminal session so the key is available.
 
+
 When generating a monthly bitácora report through the GUI you can now choose
 how many complete months to compare (between 2 and the number of detected
 months). Use the spinbox in the Bitácora configuration section to select the
