@@ -5,3 +5,4 @@ openpyxl
 tkcalendar
 sv-ttk
 pytest
+openai
