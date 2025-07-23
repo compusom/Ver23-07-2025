@@ -188,6 +188,10 @@ class ReportApp:
         self.all_campaign_adsets_pairs = []
         self.output_filename_var = tk.StringVar()
         self.is_processing = False
+
+        # GPT API key configuration
+        self.openai_api_key = os.environ.get("OPENAI_API_KEY", "")
+        self.openai_api_key_name = ""
         
         # Para Bitácora Semanal
         self.bitacora_selected_week_start_date_var = tk.StringVar() # Fecha de inicio de la semana seleccionada
@@ -309,6 +313,14 @@ class ReportApp:
         btn_browse_dir = ttk.Button(output_frame_outer, text="Examinar...", command=self.select_output_dir); btn_browse_dir.grid(row=0, column=2, sticky="e", padx=(5,0), pady=3)
         ttk.Label(output_frame_outer, text="Archivo:").grid(row=1, column=0, sticky="w", padx=(0,5), pady=3)
         self.entry_output_filename = ttk.Entry(output_frame_outer, textvariable=self.output_filename_var); self.entry_output_filename.grid(row=1, column=1, columnspan=2, sticky="ew", pady=3)
+
+        gpt_key_frame = ttk.Frame(output_frame_outer)
+        gpt_key_frame.grid(row=2, column=0, columnspan=3, sticky="ew", pady=(5,0))
+        ttk.Label(gpt_key_frame, text="GPT API Key:").pack(side=tk.LEFT, padx=(0,5))
+        status_text = "Configurada" if self.openai_api_key else "No configurada"
+        self.lbl_gpt_key_status = ttk.Label(gpt_key_frame, text=status_text)
+        self.lbl_gpt_key_status.pack(side=tk.LEFT, padx=(0,10))
+        ttk.Button(gpt_key_frame, text="Configurar GPT API Key...", command=self._open_gpt_key_dialog).pack(side=tk.LEFT)
 
         generate_frame = ttk.Frame(main_frame); generate_frame.grid(row=5, column=0, columnspan=3, pady=(15, 10))
         try: self.style.configure('Accent.TButton', font=('Segoe UI', 12, 'bold')); btn_style = 'Accent.TButton'
@@ -751,6 +763,36 @@ class ReportApp:
         init_dir=self.output_dir.get() if os.path.isdir(self.output_dir.get()) else os.getcwd()
         dir_path=filedialog.askdirectory(title="Seleccionar Directorio de Salida",initialdir=init_dir)
         if dir_path: self.output_dir.set(dir_path); self._update_status(f"Directorio salida seleccionado: {dir_path}")
+
+    def _open_gpt_key_dialog(self):
+        dlg = tk.Toplevel(self.root)
+        dlg.title("Configurar GPT API Key")
+        ttk.Label(dlg, text="Nombre:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
+        entry_name = ttk.Entry(dlg)
+        entry_name.grid(row=0, column=1, padx=5, pady=5)
+        if self.openai_api_key_name:
+            entry_name.insert(0, self.openai_api_key_name)
+
+        ttk.Label(dlg, text="Clave:").grid(row=1, column=0, padx=5, pady=5, sticky="e")
+        entry_key = ttk.Entry(dlg, show="*")
+        entry_key.grid(row=1, column=1, padx=5, pady=5)
+        if self.openai_api_key:
+            entry_key.insert(0, self.openai_api_key)
+
+        def save_key():
+            self.openai_api_key_name = entry_name.get().strip()
+            self.openai_api_key = entry_key.get().strip()
+            if self.openai_api_key:
+                os.environ["OPENAI_API_KEY"] = self.openai_api_key
+                self.lbl_gpt_key_status.config(text="Configurada")
+            else:
+                if "OPENAI_API_KEY" in os.environ:
+                    del os.environ["OPENAI_API_KEY"]
+                self.lbl_gpt_key_status.config(text="No configurada")
+            dlg.destroy()
+
+        ttk.Button(dlg, text="Guardar", command=save_key).grid(row=2, column=0, padx=5, pady=10)
+        ttk.Button(dlg, text="Cancelar", command=dlg.destroy).grid(row=2, column=1, padx=5, pady=10)
 
     def _update_status(self, msg):
         if hasattr(self,'text_status') and self.text_status and self.text_status.winfo_exists():
