@@ -310,10 +310,33 @@ class ReportApp:
         ttk.Label(output_frame_outer, text="Archivo:").grid(row=1, column=0, sticky="w", padx=(0,5), pady=3)
         self.entry_output_filename = ttk.Entry(output_frame_outer, textvariable=self.output_filename_var); self.entry_output_filename.grid(row=1, column=1, columnspan=2, sticky="ew", pady=3)
 
+        btn_api_key = ttk.Button(
+            output_frame_outer,
+            text="Configurar API Key GPT...",
+            command=self.prompt_api_key,
+        )
+        btn_api_key.grid(row=2, column=0, columnspan=3, pady=(5, 0))
+
         generate_frame = ttk.Frame(main_frame); generate_frame.grid(row=5, column=0, columnspan=3, pady=(15, 10))
         try: self.style.configure('Accent.TButton', font=('Segoe UI', 12, 'bold')); btn_style = 'Accent.TButton'
         except tk.TclError: btn_style = 'TButton'
-        self.btn_generate = ttk.Button(generate_frame, text="🚀 GENERAR REPORTE 🚀", command=self.start_processing_thread, style=btn_style, padding=(10, 5)); self.btn_generate.pack()
+        self.btn_generate = ttk.Button(
+            generate_frame,
+            text="🚀 GENERAR REPORTE 🚀",
+            command=self.start_processing_thread,
+            style=btn_style,
+            padding=(10, 5),
+        )
+        self.btn_generate.pack(side=tk.LEFT, padx=5)
+
+        self.btn_generate_gpt = ttk.Button(
+            generate_frame,
+            text="🚀 GENERAR + GPT 🚀",
+            command=lambda: self.start_processing_thread(use_gpt=True),
+            style=btn_style,
+            padding=(10, 5),
+        )
+        self.btn_generate_gpt.pack(side=tk.LEFT, padx=5)
 
         status_frame = ttk.LabelFrame(main_frame, text="Registro del Proceso", padding=(10, 5)); status_frame.grid(row=6, column=0, columnspan=3, sticky="nsew", padx=10, pady=(5, 10)); status_frame.columnconfigure(0, weight=1); status_frame.rowconfigure(0, weight=1)
         self.text_status = scrolledtext.ScrolledText(status_frame, wrap=tk.WORD, height=10, bd=0, state=tk.DISABLED, font=("Consolas", 9)); self.text_status.grid(row=0, column=0, sticky="nsew"); main_frame.rowconfigure(6, weight=1)
@@ -346,6 +369,19 @@ class ReportApp:
         else:
             fn = f"reporte_desconocido_{ts}.txt"
         self.output_filename_var.set(fn)
+
+    def prompt_api_key(self):
+        key = simpledialog.askstring(
+            "Configurar API Key",
+            "Introduce tu OpenAI API Key:",
+            parent=self.root,
+            show="*",
+        )
+        if key is not None:
+            os.environ["OPENAI_API_KEY"] = key
+            messagebox.showinfo("API Key", "API key configurada.")
+        else:
+            messagebox.showinfo("API Key", "No se modificó la clave.")
 
     def _on_report_type_change(self):
         self._set_default_filename()
@@ -778,7 +814,7 @@ class ReportApp:
         elif msg=="---ERROR---": self.processing_finished(success=False)
         else: self._update_status(msg)
 
-    def start_processing_thread(self):
+    def start_processing_thread(self, use_gpt=False):
         global procesar_reporte_rendimiento_func, procesar_reporte_bitacora_func 
         
         if procesar_reporte_rendimiento_func is None or procesar_reporte_bitacora_func is None:
@@ -846,14 +882,31 @@ class ReportApp:
                 
                 months_to_compare = self.bitacora_months_to_compare_var.get() if bitacora_comp_type == "Monthly" else 2
                 target_func=procesar_reporte_bitacora_func;
-                args_tuple=(self.input_files.copy(), out_dir, out_file, self.status_queue,
-                            camp_proc, adsets_proc_list,
-                            selected_week_start_str, selected_week_end_str,
-                            bitacora_comp_type, months_to_compare)
+                args_tuple=(
+                    self.input_files.copy(),
+                    out_dir,
+                    out_file,
+                    self.status_queue,
+                    camp_proc,
+                    adsets_proc_list,
+                    selected_week_start_str,
+                    selected_week_end_str,
+                    bitacora_comp_type,
+                    months_to_compare,
+                    use_gpt,
+                )
 
             elif rep_type=="Rendimiento":
                 target_func=procesar_reporte_rendimiento_func; 
-                args_tuple=(self.input_files.copy(),out_dir,out_file,self.status_queue,camp_proc, adsets_proc_list)
+                args_tuple=(
+                    self.input_files.copy(),
+                    out_dir,
+                    out_file,
+                    self.status_queue,
+                    camp_proc,
+                    adsets_proc_list,
+                    use_gpt,
+                )
             else: messagebox.showerror("Error",f"Tipo reporte '{rep_type}' no reconocido."); return
         except NameError as ne_func: err=f"Error Código: Falta función principal: {ne_func}"; messagebox.showerror("Error Interno",err); self._update_status(f"ERROR CRÍTICO: {err}"); return
         except Exception as e_prep: err=f"Error preparando ejecución: {e_prep}"; messagebox.showerror("Error",err); self._update_status(f"ERROR CRÍTICO: {err}"); return
@@ -874,9 +927,12 @@ class ReportApp:
     def processing_finished(self, success):
         self.is_processing=False
         try:
-             if hasattr(self,'btn_generate') and self.btn_generate.winfo_exists():
-                 self.btn_generate.config(state=tk.NORMAL)
-        except tk.TclError: pass
+            if hasattr(self, 'btn_generate') and self.btn_generate.winfo_exists():
+                self.btn_generate.config(state=tk.NORMAL)
+            if hasattr(self, 'btn_generate_gpt') and self.btn_generate_gpt.winfo_exists():
+                self.btn_generate_gpt.config(state=tk.NORMAL)
+        except tk.TclError:
+            pass
 
         rep_type=self.report_type.get(); title=f"✅ ¡Éxito ({rep_type})!" if success else f"❌ ¡Error ({rep_type})!"
         final_log=f"\n🏁 ¡Proceso {'completado con éxito!' if success else 'terminó con ERRORES!'} Revisa el registro y el archivo de salida."; self._update_status(final_log)

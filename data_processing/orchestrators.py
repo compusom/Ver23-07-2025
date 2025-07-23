@@ -36,7 +36,15 @@ from gpt_analysis import generate_gpt_insights
 # Variable global para mensajes de resumen específicos de este módulo
 log_summary_messages_orchestrator = []
 
-def procesar_reporte_rendimiento(input_files, output_dir, output_filename, status_queue, selected_campaign, selected_adsets):
+def procesar_reporte_rendimiento(
+    input_files,
+    output_dir,
+    output_filename,
+    status_queue,
+    selected_campaign,
+    selected_adsets,
+    use_gpt=False,
+):
     log_file_handler = None
     global log_summary_messages_orchestrator
     log_summary_messages_orchestrator = []
@@ -191,11 +199,12 @@ def procesar_reporte_rendimiento(input_files, output_dir, output_filename, statu
             log("============================================================")
 
             metrics_summary = "\n".join(log_summary_messages_orchestrator[-5:])
-            gpt_text = generate_gpt_insights(metrics_summary)
-            if gpt_text:
-                log("\n--- Análisis Inteligente ---")
-                for line in gpt_text.splitlines():
-                    log(line)
+            if use_gpt:
+                gpt_text = generate_gpt_insights(metrics_summary)
+                if gpt_text:
+                    log("\n--- Análisis Inteligente ---")
+                    for line in gpt_text.splitlines():
+                        log(line)
 
             log("\n\n--- FIN DEL REPORTE RENDIMIENTO ---",importante=True); status_queue.put("---DONE---")
 
@@ -223,10 +232,19 @@ def procesar_reporte_rendimiento(input_files, output_dir, output_filename, statu
                 log(f"Adv: error al cerrar log: {e_close}")
 
 
-def procesar_reporte_bitacora(input_files, output_dir, output_filename, status_queue,
-                               selected_campaign, selected_adsets,
-                               current_week_start_input_str, current_week_end_input_str,
-                               bitacora_comparison_type, months_to_compare=2):
+def procesar_reporte_bitacora(
+    input_files,
+    output_dir,
+    output_filename,
+    status_queue,
+    selected_campaign,
+    selected_adsets,
+    current_week_start_input_str,
+    current_week_end_input_str,
+    bitacora_comparison_type,
+    months_to_compare=2,
+    use_gpt=False,
+):
     log_file_handler = None
     global log_summary_messages_orchestrator
     log_summary_messages_orchestrator = []
@@ -633,11 +651,12 @@ def procesar_reporte_bitacora(input_files, output_dir, output_filename, status_q
             except Exception:
                 metrics_summary = "\n".join(log_summary_messages_orchestrator[-5:])
 
-            gpt_text = generate_gpt_insights(metrics_summary)
-            if gpt_text:
-                log("\n--- Análisis Inteligente ---")
-                for line in gpt_text.splitlines():
-                    log(line)
+            if use_gpt:
+                gpt_text = generate_gpt_insights(metrics_summary)
+                if gpt_text:
+                    log("\n--- Análisis Inteligente ---")
+                    for line in gpt_text.splitlines():
+                        log(line)
 
             log(f"\n\n--- FIN DEL REPORTE BITÁCORA ({bitacora_comparison_type}) ---", importante=True); status_queue.put("---DONE---")
 
